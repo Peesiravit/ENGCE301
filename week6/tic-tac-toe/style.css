@@ -1,38 +1,101 @@
 /**
- See: CSS Variables
- https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_variables
-**/
+ * CSS สำหรับ Tic-Tac-Toe (Lab 6.1)
+ **/
 :root {
-    --grid-size: 450px;
-    --margin-size: 10px;
-    --square-size: calc((var(--grid-size) / 3) - var(--margin-size));
-  }
-  
-  body {
-    font-family: sans-serif;
-  }
-  
-  #grid {
-    align-content: space-between;
-    background-color: rgba(0,0,0,0.5);
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    height: var(--grid-size);
-    width: var(--grid-size);
-  }
-  
-  #grid div {
-    background-color: white;
-    height: var(--square-size);
-    width: var(--square-size);
-  
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  #grid div img {
-    width: 100%;
-  }
-  
+  --grid-size: 450px;
+  --margin-size: 10px;
+  --square-size: calc((var(--grid-size) / 3) - var(--margin-size));
+  --x-color: #ff4d4d; /* สีแดงสำหรับ X */
+  --o-color: #4d79ff; /* สีน้ำเงินสำหรับ O */
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #f8f9fa;
+}
+
+h1 {
+  color: #333;
+}
+
+/* ส่วนแสดงคะแนน */
+#score-board {
+  display: flex;
+  gap: 40px;
+  margin: 20px 0;
+  padding: 15px 30px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+#x-score {
+  color: var(--x-color);
+}
+
+#o-score {
+  color: var(--o-color);
+}
+
+/* กระดานเกม */
+#grid {
+  align-content: space-between;
+  background-color: rgba(0,0,0,0.2);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  height: var(--grid-size);
+  width: var(--grid-size);
+  padding: 5px;
+  border-radius: 5px;
+}
+
+#grid div {
+  background-color: white;
+  height: var(--square-size);
+  width: var(--square-size);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+#grid div:hover {
+  background-color: #f0f0f0;
+}
+
+#grid div img {
+  width: 80%; /* ปรับขนาดรูปให้เล็กลงหน่อยไม่ให้ติดขอบ */
+  height: 80%;
+  object-fit: contain;
+}
+
+/* ปุ่ม Reset */
+#reset-button {
+  margin-top: 30px;
+  padding: 12px 25px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  background-color: #333;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#reset-button:hover {
+  background-color: #555;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+#reset-button:active {
+  transform: translateY(0);
+}

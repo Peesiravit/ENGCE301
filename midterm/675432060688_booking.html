@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจองห้องประชุมออนไลน์</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --dark-color: #1e293b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Chakra Petch', sans-serif;
+        }
+
+        body {
+            background: #f1f5f9;
+            padding: 20px;
+            color: var(--dark-color);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 { text-align: center; margin-bottom: 30px; color: var(--primary-color); }
+        h2 { margin-bottom: 15px; font-size: 1.2rem; }
+        section {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            margin-bottom: 25px;
+        }
+        .search-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        input, textarea, select {
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+
+        .btn-search { background: var(--primary-color); color: white; width: 100%; margin-top: 15px; }
+        .btn-search:hover { background: #1d4ed8; }
+        .table-container { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th { background: #f8fafc; }
+
+        .btn-book { background: var(--success-color); color: white; padding: 5px 12px; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .error-text { color: var(--error-color); font-size: 12px; margin-top: 5px; display: none; }
+
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            th, td { font-size: 13px; padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🏢 ระบบจองห้องประชุมออนไลน์</h1>
+        
+        <section class="search-section">
+            <h2>🔍 ค้นหาห้องประชุม</h2>
+            <div class="search-grid">
+                <div class="form-group">
+                    <label>วันที่</label>
+                    <input type="date" id="searchDate" required>
+                </div>
+                <div class="form-group">
+                    <label>เวลาเริ่ม</label>
+                    <input type="time" id="startTime" required>
+                </div>
+                <div class="form-group">
+                    <label>เวลาสิ้นสุด</label>
+                    <input type="time" id="endTime" required>
+                </div>
+                <div class="form-group">
+                    <label>ที่นั่งขั้นต่ำ</label>
+                    <input type="number" id="minCapacity" min="1" placeholder="เช่น 5">
+                </div>
+            </div>
+            <div class="checkbox-group">
+                <label><input type="checkbox" name="facility" value="โปรเจคเตอร์"> โปรเจคเตอร์</label>
+                <label><input type="checkbox" name="facility" value="ไวท์บอร์ด"> ไวท์บอร์ด</label>
+                <label><input type="checkbox" name="facility" value="ระบบเสียง"> ระบบเสียง</label>
+            </div>
+            <p id="timeError" class="error-text">❌ เวลาสิ้นสุดต้องมากกว่าเวลาเริ่ม และจองได้ไม่เกิน 3 ชม.</p>
+            <button class="btn-search" onclick="searchRooms()">ค้นหาห้องว่าง</button>
+        </section>
+        
+        <section class="results-section" id="resultsSection" style="display:none;">
+            <h2>📋 รายการห้องที่ว่าง</h2>
+            <div class="table-container">
+                <table id="roomTable">
+                    <thead>
+                        <tr>
+                            <th>ชื่อห้อง</th>
+                            <th>ตึก</th>
+                            <th>ความจุ</th>
+                            <th>สิ่งอำนวยความสะดวก</th>
+                            <th>จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="roomBody"></tbody>
+                </table>
+            </div>
+        </section>
+        
+        <div class="modal" id="bookingModal">
+            <div class="modal-content">
+                <h2 id="modalTitle">จองห้องประชุม</h2>
+                <hr><br>
+                <form id="bookingForm" onsubmit="confirmBooking(event)">
+                    <input type="hidden" id="selectedRoomId">
+                    <div class="form-group">
+                        <label>วัตถุประสงค์</label>
+                        <textarea id="purpose" rows="3" required placeholder="เช่น ประชุมโครงงาน"></textarea>
+                    </div>
+                    <br>
+                    <div class="form-group">
+                        <label>จำนวนผู้เข้าร่วม</label>
+                        <input type="number" id="attendees" required min="1">
+                        <p id="capError" class="error-text">❌ จำนวนผู้เข้าร่วมเกินความจุของห้อง!</p>
+                    </div>
+                    <br>
+                    <div style="display:flex; gap:10px;">
+                        <button type="submit" class="btn-search" style="background:var(--success-color)">ยืนยันการจอง</button>
+                        <button type="button" class="btn-search" style="background:#64748b" onclick="closeModal()">ยกเลิก</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock Data
+        const rooms = [
+            { id: 1, name: "ห้อง A301", building: "ตึก A", floor: 3, capacity: 20, facilities: ["โปรเจคเตอร์", "ไวท์บอร์ด"] },
+            { id: 2, name: "ห้อง B105", building: "ตึก B", floor: 1, capacity: 5, facilities: ["ไวท์บอร์ด"] },
+            { id: 3, name: "ห้อง C402", building: "ตึก C", floor: 4, capacity: 50, facilities: ["โปรเจคเตอร์", "ระบบเสียง"] },
+            { id: 4, name: "ห้อง IT-Lab", building: "ตึกวิศวะ", floor: 2, capacity: 30, facilities: ["โปรเจคเตอร์", "ไวท์บอร์ด", "ระบบเสียง"] }
+        ];
+
+        let currentRoom = null;
+
+        function searchRooms() {
+            const start = document.getElementById('startTime').value;
+            const end = document.getElementById('endTime').value;
+            const errorMsg = document.getElementById('timeError');
+            
+            if (!start || !end) { alert("กรุณาระบุเวลาให้ครบถ้วน"); return; }
+            
+            if (end <= start) {
+                errorMsg.style.display = "block";
+                return;
+            } else {
+                errorMsg.style.display = "none";
+            }
+
+            const minCap = parseInt(document.getElementById('minCapacity').value) || 0;
+            const filtered = rooms.filter(r => r.capacity >= minCap);
+
+            const body = document.getElementById('roomBody');
+            body.innerHTML = "";
+            
+            filtered.forEach(room => {
+                body.innerHTML += `
+                    <tr>
+                        <td><b>${room.name}</b></td>
+                        <td>${room.building} (ชั้น ${room.floor})</td>
+                        <td>${room.capacity} ที่นั่ง</td>
+                        <td><small>${room.facilities.join(', ')}</small></td>
+                        <td><button class="btn-book" onclick="openModal(${room.id})">จอง</button></td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('resultsSection').style.display = "block";
+        }
+
+        function openModal(id) {
+            currentRoom = rooms.find(r => r.id === id);
+            document.getElementById('modalTitle').innerText = `🏢 จอง${currentRoom.name}`;
+            document.getElementById('selectedRoomId').value = id;
+            document.getElementById('bookingModal').style.display = "flex";
+        }
+
+        function closeModal() {
+            document.getElementById('bookingModal').style.display = "none";
+            document.getElementById('bookingForm').reset();
+            document.getElementById('capError').style.display = "none";
+        }
+
+        function confirmBooking(e) {
+            e.preventDefault();
+            const attendees = parseInt(document.getElementById('attendees').value);
+            const capError = document.getElementById('capError');
+
+            if (attendees > currentRoom.capacity) {
+                capError.style.display = "block";
+                return;
+            }
+
+            alert(`✅ การจองสำเร็จ!\nห้อง: ${currentRoom.name}\nวัตถุประสงค์: ${document.getElementById('purpose').value}`);
+            closeModal();
+        }
+    </script>
+</body>
+</html>
